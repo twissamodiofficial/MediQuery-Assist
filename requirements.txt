@@ -1,0 +1,9 @@
+langchain_huggingface
+langgraph 
+langchain-community 
+langchain-chroma 
+langgraph-checkpoint-sqlite 
+langchain
+transformers 
+sentence-transformers
+torch

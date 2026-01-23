@@ -37,7 +37,7 @@ A conversational AI medical assistant that supports text, voice, and document-ba
 ```bash
 pip install langgraph langchain-huggingface langchain-community langchain-chroma langgraph-checkpoint-sqlite langchain
 pip install gradio transformers torch
-pip install python-dotenv pypdf sentence-transformers
+pip install sentence-transformers
 ```
 
 ## Environment Setup
