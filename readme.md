@@ -8,6 +8,8 @@ sdk_version: 6.4.0
 
 A conversational AI medical assistant that supports text, voice, and document-based interactions. Built with LangGraph, RAG, and Gradio.
 
+## Live at: https://huggingface.co/spaces/twissamodi/MedQuery-Assist
+
 ## Features
 
 - **Multi-modal Input**: Text, voice (Whisper), and PDF document upload
