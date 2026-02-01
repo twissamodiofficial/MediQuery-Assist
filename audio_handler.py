@@ -5,16 +5,18 @@ class AudioHandler:
     def __init__(self):
         self.transcriber = pipeline("automatic-speech-recognition", model="openai/whisper-small")
     
-    def transcribe_audio(self, audio, current_text, file_input, message_history, chat_func):
+    def transcribe_audio(self, audio, current_text, file_input, message_history, user_state, session_state, chat_func):
         if audio is None:
-            return message_history, current_text, None, file_input
+            return message_history, current_text, None, file_input, user_state, session_state
         
         transcript = self.transcriber(audio)["text"].strip()
         
-        updated_history, cleared_text, cleared_file = chat_func(
+        updated_history, cleared_text, cleared_file, user_state, session_state = chat_func(
             transcript, 
             file_input, 
-            message_history
+            message_history,
+            user_state,
+            session_state
         )
         
-        return updated_history, current_text, None, cleared_file
+        return updated_history, cleared_text, None, cleared_file, user_state, session_state

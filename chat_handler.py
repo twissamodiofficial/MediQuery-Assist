@@ -11,7 +11,14 @@ class ChatHandler:
         self.session_id = str(uuid.uuid4())
         print(self.session_id)
     
-    def chat(self, user_message, uploaded_file, message_history):
+    def chat(self, user_message, uploaded_file, message_history, user_state, session_state):
+        if not user_state or not session_state:
+            warning = {
+                "role": "assistant",
+                "content": "Please log in and start a session before chatting."
+            }
+            return message_history + [warning], user_message, uploaded_file, user_state, session_state
+        
         user_query_parts = []
         try: 
             if user_message and user_message.strip():

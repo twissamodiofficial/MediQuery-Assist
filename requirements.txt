@@ -7,3 +7,4 @@ langchain
 transformers 
 sentence-transformers
 torch
+pypdf
