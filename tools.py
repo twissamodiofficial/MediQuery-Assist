@@ -1,6 +1,5 @@
-from langchain.tools import tool
+from langchain.tools import tool, ToolRuntime
 from langchain_community.utilities import GoogleSerperAPIWrapper
-
 
 class MedicalTools:
     def __init__(self, rag_setup):
@@ -9,13 +8,15 @@ class MedicalTools:
         
     def get_tools(self):
         @tool
-        def check_medical_history(query: str):
+        def check_medical_history(query: str, runtime: ToolRuntime):
             '''Retrieves relevent medical history of the user
 
             Args:
                 query: medical history to be searched for
             '''
-            return self.rag.retrieve_info(query)
+            print("RAG tool calling")
+            print(f"[MedicalTools] Retrieving for user_id: {runtime.state['user_id']}, query: {query}")
+            return self.rag.retrieve_info(runtime.state["user_id"], query)
         
         @tool
         def web_search(query: str):

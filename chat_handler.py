@@ -8,8 +8,6 @@ class ChatHandler:
     def __init__(self, graph, rag_setup):
         self.graph = graph
         self.rag = rag_setup
-        self.session_id = str(uuid.uuid4())
-        print(self.session_id)
     
     def chat(self, user_message, uploaded_file, message_history, user_state, session_state):
         if not user_state or not session_state:
@@ -17,7 +15,7 @@ class ChatHandler:
                 "role": "assistant",
                 "content": "Please log in and start a session before chatting."
             }
-            return message_history + [warning], user_message, uploaded_file, user_state, session_state
+            return message_history + [warning], user_message, uploaded_file
         
         user_query_parts = []
         try: 
@@ -25,7 +23,7 @@ class ChatHandler:
                 user_query_parts.append(user_message)
             
             if uploaded_file is not None:
-                result = self.rag.store_data(uploaded_file)
+                result = self.rag.store_data(uploaded_file, user_state["user_id"])
                 result_str = json.dumps(result, indent=2)
                 user_query_parts.append(f"""A medical document was uploaded. Here are the upload details: {result_str} Please inform the user about the upload status in a friendly, professional way.""")
 
@@ -34,7 +32,9 @@ class ChatHandler:
             
             user_query = (' ').join(user_query_parts)
             
-            config = {"configurable": {"thread_id": self.session_id}, "recursion_limit" : 25}
+            # Use session_id from session_state instead of self.session_id
+            thread_id = session_state["session_id"]
+            config = {"configurable": {"thread_id": thread_id}, "recursion_limit" : 25}
             current_state = self.graph.get_state(config)
             
             if not current_state.values.get("messages"):
@@ -42,10 +42,11 @@ class ChatHandler:
                     "messages": [
                         {"role": "system", "content": REACT_SYSTEM_PROMPT},
                         {"role": "user", "content": user_query}
-                    ]
+                    ],
+                    "user_id": user_state["user_id"]
                 }
             else:
-                messages = {"messages": [{"role": "user", "content": user_query}]}
+                messages = {"messages": [{"role": "user", "content": user_query}], "user_id": user_state["user_id"]}
 
             result = self.graph.invoke(
                 messages,

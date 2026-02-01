@@ -19,4 +19,4 @@ class AudioHandler:
             session_state
         )
         
-        return updated_history, cleared_text, None, cleared_file, user_state, session_state
+        return updated_history, cleared_text, None, cleared_file

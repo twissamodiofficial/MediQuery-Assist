@@ -9,6 +9,7 @@ from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
+    user_id: str
 
 
 class GraphSetup:

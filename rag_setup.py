@@ -41,7 +41,7 @@ class RAG_Setup:
     def _embed_content(self, chunks):
         self.vector_store.add_documents(chunks)
 
-    def store_data(self, file_path):
+    def store_data(self, file_path, user_id=None):
         file_hash = self._calculate_file_hash(file_path)
         
         if self._is_file_uploaded(file_hash):
@@ -55,9 +55,10 @@ class RAG_Setup:
             chunks = self._split_content(content)
             
             for chunk in chunks:
-                chunk.metadata.update({
-                    'file_hash': file_hash
-                })
+                metadata_update = {'file_hash': file_hash}
+                if user_id:
+                    metadata_update['user_id'] = user_id
+                chunk.metadata.update(metadata_update)
             
             self._embed_content(chunks)
             
@@ -72,10 +73,11 @@ class RAG_Setup:
                 "message": f"Failed to upload file: {str(e)}"
             }
 
-    def retrieve_info(self, query: str):
+    def retrieve_info(self, user_id:str, query: str):
         try:
-            results = self.vector_store.similarity_search(query, k=5)
-            print("printing tool results", results)
+            print(f"[RAG] Retrieving for user_id: {user_id}, query: {query}")
+            results = self.vector_store.similarity_search(query, k=5,  filter={"user_id": user_id})
+            print(f"[RAG] Found {len(results)} results")
             
             if not results:
                 return "No medical history found for this query."
@@ -85,4 +87,5 @@ class RAG_Setup:
             return content
         
         except Exception as e:
-            return "Failed to retrieve medical record"
+            print(f"[RAG] Error retrieving medical record: {str(e)}")
+            return f"Failed to retrieve medical record: {str(e)}"
