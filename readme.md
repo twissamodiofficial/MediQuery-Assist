@@ -4,7 +4,7 @@ emoji: 🏥
 colorFrom: blue
 colorTo: green
 sdk: gradio
-sdk_version: 5.0.0
+sdk_version: 4.44.0
 app_file: app.py
 pinned: false
 ---
@@ -59,7 +59,7 @@ SERPER_API_KEY=your_serper_key
 ## Usage
 
 ```bash
-python main.py
+python app.py
 ```
 
 Access the interface at `http://127.0.0.1:7860`
