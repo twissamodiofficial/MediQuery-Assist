@@ -9,7 +9,7 @@ class MedicalTools:
     def get_tools(self):
         @tool
         def check_medical_history(query: str, runtime: ToolRuntime):
-            '''Retrieves relevent medical history of the user
+            '''Retrieves relevant medical history of the user
 
             Args:
                 query: medical history to be searched for

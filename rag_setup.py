@@ -3,6 +3,7 @@ from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
+from document_classifier import DocumentClassifier
 
 
 class RAG_Setup:
@@ -12,6 +13,13 @@ class RAG_Setup:
             collection_name="medical_history_collection",
             embedding_function=self.embeddings,
             persist_directory="data/patient_record_db", 
+        )
+        
+        self.classifier = DocumentClassifier(
+            pages_per_group=2,
+            min_confidence=0.35,
+            max_workers=4,
+            model_name="cross-encoder/nli-deberta-v3-small"
         )
 
     def _calculate_file_hash(self, file_path):
@@ -51,23 +59,62 @@ class RAG_Setup:
             }
         
         try:
-            content = self._extract_content(file_path)
-            chunks = self._split_content(content)
+            print(f"[RAG] Classifying document...")
+            classification = self.classifier.classify_document(file_path)
+            page_map = classification['page_classifications']
             
-            for chunk in chunks:
-                metadata_update = {'file_hash': file_hash}
-                if user_id:
-                    metadata_update['user_id'] = user_id
-                chunk.metadata.update(metadata_update)
+            print(f"[RAG] Primary type: {classification['primary_type']}")
+            print(f"[RAG] Found {len(classification['all_types'])} document types "
+                  f"across {classification['total_pages']} pages in {classification['processing_time']}s")
+            if len(classification['all_types']) > 1:
+                print(f"[RAG] All types: {', '.join(classification['all_types'])}")
             
-            self._embed_content(chunks)
+            loader = PyPDFLoader(file_path)
+            pages = loader.load()
+            
+            all_chunks = []
+            text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=1000, 
+                chunk_overlap=100,
+                add_start_index=True
+            )
+            
+            for i, page in enumerate(pages):
+                page_num = i + 1
+                
+                page_class = page_map.get(page_num, {'type': 'other', 'confidence': 0.0})
+                page_chunks = text_splitter.split_documents([page])
+                
+                for chunk in page_chunks:
+                    chunk.metadata.update({
+                        'file_hash': file_hash,
+                        'page_number': page_num,
+                        'doc_type': page_class['type'],
+                        'classification_confidence': page_class['confidence'],
+                        'primary_doc_type': classification['primary_type'],
+                        'all_doc_types': ','.join(classification['all_types'])
+                    })
+                    if user_id:
+                        chunk.metadata['user_id'] = user_id
+                
+                all_chunks.extend(page_chunks)
+            
+            self._embed_content(all_chunks)
+            
+            print(f"[RAG] Stored {len(all_chunks)} chunks with page-specific labels")
             
             return {
                 "status": "success",
                 "message": f"File successfully uploaded",
-                "chunks": len(chunks)
+                "chunks": len(all_chunks),
+                "primary_type": classification['primary_type'],
+                "all_types": classification['all_types'],
+                "processing_time": classification['processing_time']
             }
         except Exception as e:
+            print(f"[RAG] Error: {e}")
+            import traceback
+            traceback.print_exc()
             return {
                 "status": "error",
                 "message": f"Failed to upload file: {str(e)}"
