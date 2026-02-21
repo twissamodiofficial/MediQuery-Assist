@@ -1,10 +1,15 @@
 ---
-title: MedQuery-Assist
-app_file: main.py
+title: MediQuery-Assist
+emoji: 🏥
+colorFrom: blue
+colorTo: green
 sdk: gradio
-sdk_version: 6.4.0
+sdk_version: 5.0.0
+app_file: app.py
+pinned: false
 ---
-# Medical Assistant Chatbot
+
+# MediQuery-Assist - Medical Assistant Chatbot
 
 A conversational AI medical assistant that supports text, voice, and document-based interactions. Built with LangGraph, RAG, and Gradio.
 
@@ -13,7 +18,8 @@ A conversational AI medical assistant that supports text, voice, and document-ba
 ## Features
 
 - **Multi-modal Input**: Text, voice (Whisper), and PDF document upload
-- **RAG System**: Store and retrieve patient medical records from PDF documents
+- **Document Classification**: Automatic classification of medical documents (lab reports, prescriptions, etc.)
+- **RAG System**: Store and retrieve patient medical records from PDF documents with page-level accuracy
 - **Web Search**: Access latest medical information via Google Serper API
 - **Conversational Memory**: Maintains context across conversation using LangGraph checkpointing
 - **ReAct Framework**: Step-by-step reasoning with tool usage
@@ -23,12 +29,13 @@ A conversational AI medical assistant that supports text, voice, and document-ba
 
 ```
 ├── rag_setup.py          # Document processing and vector store
+├── document_classifier.py # Page-based document classification
 ├── tools.py              # Medical history search and web search tools
 ├── graph_setup.py        # LangGraph workflow configuration
 ├── prompts.py            # System prompts
 ├── chat_handler.py       # Chat logic and session management
 ├── audio_handler.py      # Audio transcription
-├── main.py               # Gradio interface
+├── app.py                # Gradio interface
 └── data/
     ├── patient_record_db/    # Chroma vector store
     └── long_term_memory.db   # SQLite conversation checkpoints
@@ -37,9 +44,7 @@ A conversational AI medical assistant that supports text, voice, and document-ba
 ## Installation
 
 ```bash
-pip install langgraph langchain-huggingface langchain-community langchain-chroma langgraph-checkpoint-sqlite langchain
-pip install gradio transformers torch
-pip install sentence-transformers
+pip install -r requirements.txt
 ```
 
 ## Environment Setup
