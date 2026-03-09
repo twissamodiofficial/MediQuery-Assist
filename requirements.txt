@@ -9,4 +9,3 @@ sentence-transformers
 torch
 pypdf
 gradio
-pyaudioop

@@ -18,7 +18,6 @@ class RAG_Setup:
         self.classifier = DocumentClassifier(
             pages_per_group=2,
             min_confidence=0.35,
-            max_workers=4,
             model_name="cross-encoder/nli-deberta-v3-small"
         )
 

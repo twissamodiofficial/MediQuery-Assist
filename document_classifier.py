@@ -1,7 +1,6 @@
 from langchain_community.document_loaders import PyPDFLoader
 from transformers import pipeline
 import torch
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from collections import defaultdict
 import time
 
@@ -23,12 +22,10 @@ class DocumentClassifier:
         self, 
         pages_per_group=2,
         min_confidence=0.35,
-        max_workers=4,
         model_name="cross-encoder/nli-deberta-v3-small"
     ):
         self.pages_per_group = pages_per_group
         self.min_confidence = min_confidence
-        self.max_workers = max_workers
         self.model_name = model_name
         self.classifier = None
         
@@ -111,25 +108,31 @@ class DocumentClassifier:
     
     def _classify_groups_parallel(self, groups):
         results = []
-        
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            future_to_group = {
-                executor.submit(self._classify_single_group, group): group
-                for group in groups
-            }
-            
-            for future in as_completed(future_to_group):
-                group = future_to_group[future]
-                try:
-                    result = future.result()
-                    result['page_numbers'] = group['page_numbers']
-                    results.append(result)
-                except Exception as e:
-                    print(f"[Classifier] Group classification failed: {e}")
-        
+        texts = [g['text'] for g in groups]
+
+        # Use pipeline's native batching — faster than ThreadPoolExecutor,
+        # especially on GPU, and avoids thread-safety issues with PyTorch.
+        batch_results = self.classifier(texts, self.LABELS, multi_label=True, batch_size=8)
+
+        for group, result in zip(groups, batch_results):
+            primary_type = result['labels'][0]
+            primary_score = result['scores'][0]
+
+            if primary_score < self.min_confidence:
+                primary_type = 'other'
+
+            scores = {label: score for label, score in zip(result['labels'], result['scores'])}
+            results.append({
+                'type': primary_type,
+                'confidence': primary_score,
+                'scores': scores,
+                'page_numbers': group['page_numbers']
+            })
+
         return results
     
     def _classify_single_group(self, group):
+        # Kept for single-group use if needed directly
         text = group['text']
         
         if not text.strip():
@@ -139,6 +142,9 @@ class DocumentClassifier:
         
         primary_type = result['labels'][0]
         primary_score = result['scores'][0]
+
+        if primary_score < self.min_confidence:
+            primary_type = 'other'
         
         scores = {
             label: score 
