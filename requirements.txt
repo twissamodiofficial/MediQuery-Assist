@@ -1,10 +1,10 @@
 langchain_huggingface
-langgraph 
-langchain-community 
-langchain-chroma 
-langgraph-checkpoint-sqlite 
+langgraph
+langchain-community
+langchain-chroma
+langgraph-checkpoint-sqlite
 langchain
-transformers 
+transformers
 sentence-transformers
 torch
 pypdf
